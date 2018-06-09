@@ -1,14 +1,16 @@
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 public class Cipher {
 	
-	String key = "GYBNQKURP";
+	String key = "GYBNQKURPASDFASS";
 	int sqrKeyLength = 0;
-	String plainText = "";
-	String cipherText = "";
 	int[][] keyMatrix;
-	Map<Character, Integer> map = new HashMap<Character, Integer>(); 
+	Map<Character, Integer> charToInt = new HashMap<Character, Integer>();
+	Map<Integer, Character> intToChar = new HashMap<Integer, Character>();
+	
+	Scanner scanner = new Scanner(System.in);
 	
 	public Cipher() {
 		if(Math.round(Math.sqrt(key.length())) != Math.sqrt(key.length()) || key.length() == 0) {
@@ -19,13 +21,16 @@ public class Cipher {
 		createMapping();
 		createKeyMatrix();
 		printKeyMatrix();
+		System.out.println(encrypt(scanner.nextLine()));
 	}
 	
 	public void createMapping() {
 		for (int i = 65; i <= 90; i++) {
-			map.put((char) i, i - 65); 
+			charToInt.put((char) i, i - 65); 
+			intToChar.put(i - 65, (char) i);
 		}
-		map.put(' ', 27);
+		charToInt.put(' ', 27);
+		intToChar.put(27, ' ');
 	}
 	
 	public void createKeyMatrix() {
@@ -33,11 +38,11 @@ public class Cipher {
 		int keyIndex = 0;
 		for (int i = 0; i < keyMatrix.length; i++) {
 			for (int j = 0; j < keyMatrix[0].length; j++) {
-				if(map.get(key.charAt(keyIndex)) == null) {
+				if(charToInt.get(key.charAt(keyIndex)) == null) {
 					System.out.println("Unidentified character at key position " + keyIndex);
 					return;
 				}
-				keyMatrix[i][j] = map.get(key.charAt(keyIndex));
+				keyMatrix[i][j] = charToInt.get(key.charAt(keyIndex));
 				keyIndex++;
 			}
 		}
@@ -56,8 +61,36 @@ public class Cipher {
 		}
 	}
 	
-	public void encrypt() {
-		
+	public String encrypt(String input) {
+		String cipherText = "";
+		for (int i = 0; i < input.length(); i+=sqrKeyLength) {
+			int[] fragment = new int[sqrKeyLength];
+			for (int j = 0; j < sqrKeyLength; j++) {
+				if(i + j < input.length()) {
+					fragment[j] = charToInt.get(input.charAt(i + j));
+				}
+				else {
+					fragment[j] = charToInt.get(' ');
+				}
+			}
+			int[] encryptedFragment = multiplyMatrices(fragment);
+			for (int j = 0; j < sqrKeyLength; j++) {
+				cipherText += intToChar.get(encryptedFragment[j]);
+			}
+		}
+		return cipherText;
+	}
+	
+	public int[] multiplyMatrices(int[] fragment) {
+		int[] result = new int[sqrKeyLength];
+		for (int i = 0; i < sqrKeyLength; i++) {
+			int total = 0;
+			for (int j = 0; j < sqrKeyLength; j++) {
+				total += keyMatrix[i][j] * fragment[j];
+			}
+			result[i] = total % 27;
+		}
+		return result;
 	}
 	
 	public static void main(String[] args) {
