@@ -4,31 +4,32 @@ import java.util.Scanner;
 
 public class Cipher {
 	
-	String key = "GYBNQKURPASDFASD";
-	int sqrKeyLength = 0;
+	String key = "placeholder";
+	int sqrKeyLength;
 	int[][] keyMatrix;
 	Map<Character, Integer> charToInt = new HashMap<Character, Integer>();
 	Map<Integer, Character> intToChar = new HashMap<Integer, Character>();
+	int mod = 29;
 	
 	Scanner scanner = new Scanner(System.in);
 	
 	public Cipher() {
-		System.out.println("-----Hill Cipher Encryption & Decryption-----\n");
-		System.out.println("Key: " + key);
-		if(Math.round(Math.sqrt(key.length())) != Math.sqrt(key.length()) || key.length() == 0) {
-			System.out.println("Error: Key length has to be a perfect square.");
-			System.exit(0);
-		}
-		sqrKeyLength = (int) Math.sqrt(key.length());
+		System.out.println("-----Hill Cipher Encryption & Decryption-----");
 		createMapping();
+		createKey();
 		createKeyMatrix();
-		System.out.println("\nGenerated Key Matrix: ");
 		printKeyMatrix();
 		
 		String input = "placeholder";
 		while(!input.equals("")) {
-			System.out.print("\nEnter message to convert: ");
+			System.out.print("\nEnter message to convert (enter '1' to change key): ");
 			input = scanner.nextLine().toUpperCase();
+			if(input.equals("1")) {
+				createKey();
+				createKeyMatrix();
+				printKeyMatrix();
+				continue;
+			}
 			System.out.println(encrypt(input));
 		}
 	}
@@ -39,7 +40,11 @@ public class Cipher {
 			intToChar.put(i - 65, (char) i);
 		}
 		charToInt.put(' ', 26);
+		charToInt.put('?', 27);
+		charToInt.put('!', 28);
 		intToChar.put(26, ' ');
+		intToChar.put(27, '?');
+		intToChar.put(28, '!');
 	}
 	
 	public void createKeyMatrix() {
@@ -57,12 +62,54 @@ public class Cipher {
 		}
 	}
 	
+	public void createKey() {
+		do {
+			System.out.print("\nEnter mod: ");
+			try {
+				mod = Integer.parseInt(scanner.nextLine());
+				if(mod < 26 || mod > charToInt.size()) {
+					System.out.println("Error: mod must be in the range 26 - " + charToInt.size());
+				}
+			}
+			catch(NumberFormatException e) {
+				System.out.println("Error: Invalid value given for mod");
+				mod = 0;
+			}
+		} while( mod < 26 || mod > charToInt.size());
+		System.out.println();
+		
+		boolean valid = false;
+		while(!valid || Math.round(Math.sqrt(key.length())) != Math.sqrt(key.length()) || key.length() == 0) {
+			System.out.print("Enter key: ");
+			key = scanner.nextLine().toUpperCase();
+			if(Math.round(Math.sqrt(key.length())) != Math.sqrt(key.length())) {
+				System.out.println("Error: Key length has to be a perfect square.");
+			}
+			else if(key.length() == 0) {
+				System.out.println("Error: Key length cannot be zero");
+			}
+			for (int i = 0; i < key.length(); i++) {
+				if(charToInt.get(key.charAt(i)) == null || charToInt.get(key.charAt(i)) >= mod) {
+					System.out.println("Error: Unidentified character at key position " + i);
+					valid = false;
+					break;
+				}
+				if(i == key.length() - 1) {
+					valid = true;
+				}
+			}
+		}
+		sqrKeyLength = (int) Math.sqrt(key.length());
+	}
+	
 	public void printKeyMatrix() {
+		System.out.println("\nKey: " + key + " (mod " + mod + ")");
+		System.out.println("\nGenerated Key Matrix: ");
 		for (int i = 0; i < keyMatrix.length; i++) {
 			System.out.print("[ ");
 			for (int j = 0; j < keyMatrix[0].length; j++) {
 				System.out.print(keyMatrix[i][j] + " ");
-				if(keyMatrix[i][j] < 9) {
+				if(keyMatrix[i][j] <= 9) {
 					System.out.print(" ");
 				}
 			}
@@ -100,7 +147,7 @@ public class Cipher {
 			for (int j = 0; j < sqrKeyLength; j++) {
 				total += keyMatrix[i][j] * fragment[j];
 			}
-			result[i] = total % 27;
+			result[i] = total % mod;
 		}
 		return result;
 	}
