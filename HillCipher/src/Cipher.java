@@ -2,6 +2,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+//implementation of a encryption/decryption algorithm using Hill matrices
+
 public class Cipher {
 	
 	String key = "placeholder";
@@ -19,11 +21,12 @@ public class Cipher {
 		createKey();
 		createKeyMatrix();
 		printKeyMatrix();
-		
+		//prompt user for input to convert
 		String input = "placeholder";
 		while(!input.equals("")) {
 			System.out.print("\nEnter message to convert (enter '1' to change key): ");
 			input = scanner.nextLine().toUpperCase();
+			//change mod/key
 			if(input.equals("1")) {
 				createKey();
 				createKeyMatrix();
@@ -34,6 +37,8 @@ public class Cipher {
 		}
 	}
 	
+	//creates the character -> int and int -> character mappings
+	//A = 0, B = 1, ... Z = 25
 	public void createMapping() {
 		for (int i = 65; i <= 90; i++) {
 			charToInt.put((char) i, i - 65); 
@@ -47,6 +52,7 @@ public class Cipher {
 		intToChar.put(28, '!');
 	}
 	
+	//generates the key matrix based on the key
 	public void createKeyMatrix() {
 		keyMatrix = new int[sqrKeyLength][sqrKeyLength]; 
 		int keyIndex = 0;
@@ -62,15 +68,18 @@ public class Cipher {
 		}
 	}
 	
+	//prompts user to enter in a valid modulo and key
 	public void createKey() {
 		do {
 			System.out.print("\nEnter mod: ");
 			try {
 				mod = Integer.parseInt(scanner.nextLine());
+				//check if mod is in valid range
 				if(mod < 26 || mod > charToInt.size()) {
 					System.out.println("Error: mod must be in the range 26 - " + charToInt.size());
 				}
 			}
+			//bulletproof for invalid characters 
 			catch(NumberFormatException e) {
 				System.out.println("Error: Invalid value given for mod");
 				mod = 0;
@@ -79,6 +88,7 @@ public class Cipher {
 		System.out.println();
 		
 		boolean valid = false;
+		//check if key is valid
 		while(!valid || Math.round(Math.sqrt(key.length())) != Math.sqrt(key.length()) || key.length() == 0) {
 			System.out.print("Enter key: ");
 			key = scanner.nextLine().toUpperCase();
@@ -88,6 +98,7 @@ public class Cipher {
 			else if(key.length() == 0) {
 				System.out.println("Error: Key length cannot be zero");
 			}
+			//iterates through key to check for invalid characters
 			for (int i = 0; i < key.length(); i++) {
 				if(charToInt.get(key.charAt(i)) == null || charToInt.get(key.charAt(i)) >= mod) {
 					System.out.println("Error: Unidentified character at key position " + i);
@@ -102,6 +113,7 @@ public class Cipher {
 		sqrKeyLength = (int) Math.sqrt(key.length());
 	}
 	
+	//prints key matrix to console
 	public void printKeyMatrix() {
 		System.out.println("\nKey: " + key + " (mod " + mod + ")");
 		System.out.println("\nGenerated Key Matrix: ");
@@ -117,6 +129,7 @@ public class Cipher {
 		}
 	}
 	
+	//multiplies input with key matrix to get encrypted text
 	public String encrypt(String input) {
 		String cipherText = "";
 		for (int i = 0; i < input.length(); i+=sqrKeyLength) {
@@ -140,6 +153,7 @@ public class Cipher {
 		return "Converted message: " + cipherText;
 	}
 	
+	//mutliplies the key matrix with a size n fragment of the input 
 	public int[] multiplyMatrices(int[] fragment) {
 		int[] result = new int[sqrKeyLength];
 		for (int i = 0; i < sqrKeyLength; i++) {
